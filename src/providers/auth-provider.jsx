@@ -166,6 +166,43 @@ function AuthProvider({ children }) {
     }
   };
 
+  const updateUserProfile = async (data) => {
+    try {
+      const updates = {};
+      if (data.displayName) updates.displayName = data.displayName;
+      if (data.photoURL) updates.photoURL = data.photoURL;
+      
+      await updateProfile(user, updates);
+      
+      // Update local user state to reflect changes
+      setUser({ ...user, ...updates });
+      
+      return true;
+    } catch (error) {
+      console.error('Profile update error:', error);
+      throw error;
+    }
+  };
+  
+  const updateUserPassword = async (currentPassword, newPassword) => {
+    try {
+      // Re-authenticate user before password change
+      const credential = EmailAuthProvider.credential(
+        user.email,
+        currentPassword
+      );
+      await reauthenticateWithCredential(user, credential);
+      
+      // Change password
+      await updatePassword(user, newPassword);
+      
+      return true;
+    } catch (error) {
+      console.error('Password update error:', error);
+      throw error;
+    }
+  };
+
   const value = {
     user,
     loading,
@@ -173,6 +210,8 @@ function AuthProvider({ children }) {
     signup,
     logout,
     resetPassword,
+    updateUserProfile,   // Add this
+    updateUserPassword,  // Add this
   };
 
   return (
