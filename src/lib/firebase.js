@@ -9,9 +9,18 @@ import {
   onAuthStateChanged,
   updateProfile
 } from 'firebase/auth';
+import { 
+  getFirestore, 
+  collection, 
+  addDoc, 
+  getDocs, 
+  query, 
+  where, 
+  orderBy, 
+  serverTimestamp 
+} from 'firebase/firestore';
 
 const firebaseConfig = {
-  // TODO: Replace with your Firebase config
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
@@ -23,7 +32,9 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+const db = getFirestore(app);
 
+// Export auth methods
 export {
   auth,
   signInWithEmailAndPassword,
@@ -32,4 +43,16 @@ export {
   sendPasswordResetEmail,
   onAuthStateChanged,
   updateProfile
+};
+
+// Export Firestore methods and instance
+export {
+  db,
+  collection,
+  addDoc,
+  getDocs,
+  query,
+  where,
+  orderBy,
+  serverTimestamp
 };
