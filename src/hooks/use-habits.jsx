@@ -1,10 +1,13 @@
-// src/hooks/use-habits.jsx
 import { useState, useCallback } from 'react';
 import { 
-  db,
+  db, 
   collection, 
   addDoc, 
   getDocs,
+  getDoc,
+  doc,
+  updateDoc,
+  deleteDoc,
   query, 
   where, 
   orderBy,
@@ -40,7 +43,6 @@ export const useHabits = () => {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      // First try with the full query
       const habitsQuery = query(
         collection(db, 'habits'),
         where('userId', '==', user.uid),
@@ -53,20 +55,16 @@ export const useHabits = () => {
         .map(doc => ({
           id: doc.id,
           ...doc.data(),
-          createdAt: doc.data().createdAt?.toDate()
+          createdAt: doc.data().createdAt?.toDate(),
+          completedDates: doc.data().completedDates || []
         }))
         .filter(habit => {
           const startDate = new Date(habit.startDate);
           return startDate <= today;
         });
-
     } catch (error) {
-      // If we get an index error, fall back to a simpler query
       if (error.code === 'failed-precondition' || error.code === 'resource-exhausted') {
         setIsIndexBuilding(true);
-        console.log('Index not ready, falling back to simple query');
-        
-        // Simpler query that doesn't require the composite index
         const simpleQuery = query(
           collection(db, 'habits'),
           where('userId', '==', user.uid)
@@ -77,12 +75,13 @@ export const useHabits = () => {
           .map(doc => ({
             id: doc.id,
             ...doc.data(),
-            createdAt: doc.data().createdAt?.toDate()
+            createdAt: doc.data().createdAt?.toDate(),
+            completedDates: doc.data().completedDates || []
           }))
           .filter(habit => {
             const startDate = new Date(habit.startDate);
             const isActive = habit.status === 'active';
-            return startDate <= today && isActive;
+            return startDate <= new Date() && isActive;
           })
           .sort((a, b) => b.createdAt - a.createdAt);
       }
@@ -90,9 +89,64 @@ export const useHabits = () => {
     }
   }, [user]);
 
+  // In useHabits.jsx, update the toggleHabitCompletion function:
+  const toggleHabitCompletion = async (habitId) => {
+    if (!user) throw new Error('Must be logged in to update habits');
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayStr = today.toISOString();
+    
+    const habitRef = doc(db, 'habits', habitId);
+    const habitDoc = await getDoc(habitRef);
+    
+    if (!habitDoc.exists()) {
+      throw new Error('Habit not found');
+    }
+
+    const habit = habitDoc.data();
+    const completedDates = habit.completedDates || [];
+    
+    const isCompleted = completedDates.includes(todayStr);
+    
+    if (isCompleted) {
+      await updateDoc(habitRef, {
+        completedDates: completedDates.filter(date => date !== todayStr)
+      });
+    } else {
+      await updateDoc(habitRef, {
+        completedDates: [...completedDates, todayStr]
+      });
+    }
+
+    return !isCompleted;
+  };
+
+  const deleteHabit = async (habitId) => {
+    if (!user) throw new Error('Must be logged in to delete habits');
+    await deleteDoc(doc(db, 'habits', habitId));
+  };
+
+  // Add this function that was missing
+  const getCompletedHabits = useCallback(async () => {
+    if (!user) return [];
+    
+    const habits = await getTodayHabits();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayStr = today.toISOString();
+    
+    return habits
+      .filter(habit => habit.completedDates?.includes(todayStr))
+      .map(habit => habit.id);
+  }, [user, getTodayHabits]);
+
   return {
     createHabit,
     getTodayHabits,
-    isIndexBuilding
+    toggleHabitCompletion,
+    deleteHabit,
+    getCompletedHabits,  // Make sure to export it
+    isIndexBuilding,
   };
 };

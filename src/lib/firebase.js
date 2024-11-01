@@ -13,11 +13,15 @@ import {
   getFirestore, 
   collection, 
   addDoc, 
-  getDocs, 
+  getDocs,
+  getDoc,    // Add this
+  deleteDoc,
+  doc,
   query, 
   where, 
   orderBy, 
-  serverTimestamp 
+  serverTimestamp,
+  updateDoc
 } from 'firebase/firestore';
 
 const firebaseConfig = {
@@ -51,8 +55,12 @@ export {
   collection,
   addDoc,
   getDocs,
+  getDoc,    // Add this
+  deleteDoc,
+  doc,
   query,
   where,
   orderBy,
-  serverTimestamp
+  serverTimestamp,
+  updateDoc
 };

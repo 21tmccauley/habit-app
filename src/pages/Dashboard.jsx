@@ -9,21 +9,29 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, CheckCircle2 } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import CreateHabitForm from '@/components/habits/CreateHabitForm';
+import HabitContainer from '@/components/habits/HabitContainer';
 import { useHabits } from '@/hooks/use-habits';
 
 const Dashboard = () => {
   const { toast } = useToast();
-  const { getTodayHabits } = useHabits();
+  const { getTodayHabits, getCompletedHabits } = useHabits();
+  
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [todayHabits, setTodayHabits] = useState([]);
+  const [habits, setHabits] = useState([]);
+  const [completedHabits, setCompletedHabits] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const loadHabits = async () => {
     try {
-      const habits = await getTodayHabits();
-      setTodayHabits(habits);
+      setIsLoading(true);
+      const [habitsList, completed] = await Promise.all([
+        getTodayHabits(),
+        getCompletedHabits()
+      ]);
+      setHabits(habitsList);
+      setCompletedHabits(completed);
     } catch (error) {
       console.error('Error loading habits:', error);
       toast({
@@ -73,68 +81,63 @@ const Dashboard = () => {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {todayHabits.length === 0 && !isLoading && (
-          <Card>
+        {isLoading ? (
+          // Loading skeletons
+          [...Array(3)].map((_, i) => (
+            <Card key={i} className="w-full">
+              <CardHeader>
+                <div className="h-4 bg-muted rounded w-2/3 animate-pulse" />
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="h-3 bg-muted rounded w-full animate-pulse" />
+                  <div className="h-3 bg-muted rounded w-4/5 animate-pulse" />
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        ) : habits.length === 0 ? (
+          // Empty state
+          <Card className="col-span-full">
             <CardHeader>
-              <CardTitle>Quick Start</CardTitle>
+              <CardTitle>No Habits Yet</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="mb-4">Start tracking your first habit today!</p>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button>Create Habit</Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[500px]">
-                  <DialogHeader>
-                    <DialogTitle>Create New Habit</DialogTitle>
-                  </DialogHeader>
-                  <CreateHabitForm
-                    onSuccess={onHabitCreated}
-                    onCancel={() => setIsModalOpen(false)}
-                  />
-                </DialogContent>
-              </Dialog>
+              <p className="text-muted-foreground">
+                Start by creating your first habit using the button above.
+              </p>
             </CardContent>
           </Card>
+        ) : (
+          // Habit list
+          habits.map(habit => (
+            <HabitContainer
+              key={habit.id}
+              habit={habit}
+              isCompleted={completedHabits.includes(habit.id)}
+              onUpdate={loadHabits}
+            />
+          ))
         )}
-        
-        <Card>
-          <CardHeader>
-            <CardTitle>Today's Habits</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <p className="text-muted-foreground">Loading habits...</p>
-            ) : todayHabits.length === 0 ? (
-              <p className="text-muted-foreground">No habits scheduled for today</p>
-            ) : (
-              <ul className="space-y-2">
-                {todayHabits.map(habit => (
-                  <li key={habit.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-accent">
-                    <span>{habit.title}</span>
-                    <Button variant="ghost" size="sm">
-                      <CheckCircle2 className="w-5 h-5" />
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Weekly Progress</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">
-              {todayHabits.length === 0 
-                ? "Start tracking to see your progress"
-                : "Progress tracking coming soon"}
-            </p>
-          </CardContent>
-        </Card>
       </div>
+
+      {habits.length > 0 && (
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>Summary</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center">
+              <p className="text-2xl font-bold">
+                {completedHabits.length} / {habits.length}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                habits completed today
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
