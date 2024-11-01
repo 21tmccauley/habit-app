@@ -1,3 +1,4 @@
+// src/providers/auth-provider.jsx
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
@@ -11,9 +12,20 @@ import {
   updateProfile
 } from '@/lib/firebase';
 
-const AuthContext = createContext({});
+// Create context
+const AuthContext = createContext(null);
 
-export const AuthProvider = ({ children }) => {
+// Custom hook for using auth
+function useAuth() {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+}
+
+// Provider component
+function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -21,7 +33,9 @@ export const AuthProvider = ({ children }) => {
 
   // Initialize auth state
   useEffect(() => {
+    console.log('Setting up auth listener...'); // Debug log
     const unsubscribe = onAuthStateChanged(auth, (user) => {
+      console.log('Auth state changed:', user ? 'User logged in' : 'No user'); // Debug log
       setUser(user);
       setLoading(false);
     });
@@ -29,19 +43,28 @@ export const AuthProvider = ({ children }) => {
     return () => unsubscribe();
   }, []);
 
-  const login = async (email, password) => {
+  const signup = async (email, password, name) => {
+    console.log('Starting signup...'); // Debug log
     try {
       setLoading(true);
-      await signInWithEmailAndPassword(auth, email, password);
+      // Create user
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      console.log('User created successfully'); // Debug log
+
+      // Update profile
+      await updateProfile(userCredential.user, { displayName: name });
+      console.log('Profile updated successfully'); // Debug log
+
       toast({
-        title: "Login successful",
-        description: "Welcome back!",
+        title: "Account created",
+        description: "Welcome to HabitTracker!",
       });
       navigate('/dashboard');
     } catch (error) {
+      console.error('Signup error:', error); // Debug log
       toast({
-        title: "Login failed",
-        description: getAuthErrorMessage(error.code),
+        title: "Signup failed",
+        description: error.message,
         variant: "destructive",
       });
       throw error;
@@ -50,21 +73,22 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const signup = async (email, password, name) => {
+  const login = async (email, password) => {
+    console.log('Starting login...'); // Debug log
     try {
       setLoading(true);
-      const { user: newUser } = await createUserWithEmailAndPassword(auth, email, password);
-      await updateProfile(newUser, { displayName: name });
-      
+      await signInWithEmailAndPassword(auth, email, password);
+      console.log('Login successful'); // Debug log
       toast({
-        title: "Account created",
-        description: "Welcome to HabitTracker!",
+        title: "Login successful",
+        description: "Welcome back!",
       });
       navigate('/dashboard');
     } catch (error) {
+      console.error('Login error:', error); // Debug log
       toast({
-        title: "Signup failed",
-        description: getAuthErrorMessage(error.code),
+        title: "Login failed",
+        description: error.message,
         variant: "destructive",
       });
       throw error;
@@ -74,59 +98,45 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = async () => {
+    console.log('Starting logout...'); // Debug log
     try {
       await signOut(auth);
+      console.log('Logout successful'); // Debug log
       toast({
         title: "Logged out",
         description: "Come back soon!",
       });
       navigate('/login');
     } catch (error) {
+      console.error('Logout error:', error); // Debug log
       toast({
         title: "Logout failed",
-        description: getAuthErrorMessage(error.code),
+        description: error.message,
         variant: "destructive",
       });
     }
   };
 
   const resetPassword = async (email) => {
+    console.log('Starting password reset...'); // Debug log
     try {
       setLoading(true);
       await sendPasswordResetEmail(auth, email);
+      console.log('Password reset email sent'); // Debug log
       toast({
         title: "Reset email sent",
         description: "Check your inbox for password reset instructions.",
       });
     } catch (error) {
+      console.error('Password reset error:', error); // Debug log
       toast({
         title: "Reset failed",
-        description: getAuthErrorMessage(error.code),
+        description: error.message,
         variant: "destructive",
       });
       throw error;
     } finally {
       setLoading(false);
-    }
-  };
-
-  // Helper function to get user-friendly error messages
-  const getAuthErrorMessage = (errorCode) => {
-    switch (errorCode) {
-      case 'auth/user-not-found':
-        return 'No account found with this email';
-      case 'auth/wrong-password':
-        return 'Invalid password';
-      case 'auth/email-already-in-use':
-        return 'An account with this email already exists';
-      case 'auth/weak-password':
-        return 'Password should be at least 6 characters';
-      case 'auth/invalid-email':
-        return 'Invalid email address';
-      case 'auth/too-many-requests':
-        return 'Too many attempts. Please try again later';
-      default:
-        return 'An error occurred. Please try again';
     }
   };
 
@@ -144,17 +154,13 @@ export const AuthProvider = ({ children }) => {
       {!loading && children}
     </AuthContext.Provider>
   );
-};
+}
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
+// Change these to named exports
+export { AuthProvider, useAuth };
 
-export const ProtectedRoute = ({ children }) => {
+// Keep this as a component export
+export function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
@@ -165,8 +171,8 @@ export const ProtectedRoute = ({ children }) => {
   }, [user, loading, navigate]);
 
   if (loading) {
-    return <div>Loading...</div>; // TODO: Replace with proper loading component
+    return <div>Loading...</div>;
   }
 
   return user ? children : null;
-};
+}
