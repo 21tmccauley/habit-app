@@ -31,6 +31,31 @@ function AuthProvider({ children }) {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Add the error message handler
+  const getAuthErrorMessage = (error) => {
+    const errorCode = error.code || error.message;
+    switch (errorCode) {
+      case 'auth/invalid-credential':
+        return 'Invalid email or password';
+      case 'auth/user-not-found':
+        return 'No account found with this email';
+      case 'auth/wrong-password':
+        return 'Invalid password';
+      case 'auth/email-already-in-use':
+        return 'An account with this email already exists';
+      case 'auth/weak-password':
+        return 'Password should be at least 6 characters';
+      case 'auth/invalid-email':
+        return 'Invalid email address';
+      case 'auth/too-many-requests':
+        return 'Too many attempts. Please try again later';
+      case 'auth/network-request-failed':
+        return 'Network error. Please check your connection';
+      default:
+        return 'An error occurred. Please try again';
+    }
+  };
+
   // Initialize auth state
   useEffect(() => {
     console.log('Setting up auth listener...'); // Debug log
@@ -64,7 +89,7 @@ function AuthProvider({ children }) {
       console.error('Signup error:', error); // Debug log
       toast({
         title: "Signup failed",
-        description: error.message,
+        description: getAuthErrorMessage(error),
         variant: "destructive",
       });
       throw error;
@@ -85,13 +110,14 @@ function AuthProvider({ children }) {
       });
       navigate('/dashboard');
     } catch (error) {
-      console.error('Login error:', error); // Debug log
+      console.log('Showing error toast for:', error.code); // Debug log
+      await new Promise(resolve => setTimeout(resolve, 100)); // Small delay
       toast({
         title: "Login failed",
-        description: error.message,
+        description: getAuthErrorMessage(error),
         variant: "destructive",
       });
-      throw error;
+      console.log('Toast should be visible now'); // Debug log
     } finally {
       setLoading(false);
     }
@@ -111,7 +137,7 @@ function AuthProvider({ children }) {
       console.error('Logout error:', error); // Debug log
       toast({
         title: "Logout failed",
-        description: error.message,
+        description: getAuthErrorMessage(error),
         variant: "destructive",
       });
     }
@@ -131,7 +157,7 @@ function AuthProvider({ children }) {
       console.error('Password reset error:', error); // Debug log
       toast({
         title: "Reset failed",
-        description: error.message,
+        description: getAuthErrorMessage(error),
         variant: "destructive",
       });
       throw error;

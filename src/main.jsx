@@ -1,4 +1,3 @@
-// src/main.jsx
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
@@ -10,13 +9,13 @@ import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <BrowserRouter>
-      <ThemeProvider defaultTheme="system" storageKey="ui-theme">
+    <ThemeProvider defaultTheme="system" storageKey="ui-theme">
+      <BrowserRouter>
         <AuthProvider>
           <Router />
           <Toaster />
         </AuthProvider>
-      </ThemeProvider>
-    </BrowserRouter>
+      </BrowserRouter>
+    </ThemeProvider>
   </React.StrictMode>
 );
