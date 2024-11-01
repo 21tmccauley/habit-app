@@ -1,8 +1,8 @@
+// src/components/ui/toast.jsx
 import * as React from "react"
 import * as ToastPrimitives from "@radix-ui/react-toast"
 import { cva } from "class-variance-authority"
 import { X } from "lucide-react"
-
 import { cn } from "@/lib/utils"
 
 const ToastProvider = ToastPrimitives.Provider
@@ -70,18 +70,12 @@ const ToastClose = React.forwardRef(({ className, ...props }, ref) => (
 ToastClose.displayName = ToastPrimitives.Close.displayName
 
 const ToastTitle = React.forwardRef(({ className, ...props }, ref) => (
-  <ToastPrimitives.Title
-    ref={ref}
-    className={cn("text-sm font-semibold", className)}
-    {...props} />
+  <ToastPrimitives.Title ref={ref} className={cn("text-sm font-semibold", className)} {...props} />
 ))
 ToastTitle.displayName = ToastPrimitives.Title.displayName
 
 const ToastDescription = React.forwardRef(({ className, ...props }, ref) => (
-  <ToastPrimitives.Description
-    ref={ref}
-    className={cn("text-sm opacity-90", className)}
-    {...props} />
+  <ToastPrimitives.Description ref={ref} className={cn("text-sm opacity-90", className)} {...props} />
 ))
 ToastDescription.displayName = ToastPrimitives.Description.displayName
 
@@ -93,22 +87,4 @@ export {
   ToastDescription,
   ToastClose,
   ToastAction,
-}
-
-export const useToast = () => {
-  const [toasts, setToasts] = React.useState([])
-
-  const toast = ({
-    title,
-    description,
-    action,
-    ...props
-  }) => {
-    setToasts((prevToasts) => [
-      ...prevToasts,
-      { title, description, action, ...props },
-    ])
-  }
-
-  return { toast, toasts, setToasts }
 }
