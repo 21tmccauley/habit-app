@@ -1,8 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
-
+import { ThemeProvider } from './components/theme/theme-provider';
 import Layout from './components/layout/Layout'
 
-import './App.css'
 
 const Dashboard = () => (
   <div className="space-y-4">
@@ -41,19 +40,21 @@ const Statistics = () => (
 
 function App() {
   return (
-    <Router>
-      <Layout>
-        <Routes>
-          <Route path="/" element={<Navigate to="/dashboard" replace/>} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<SignUp />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/statistics" element={<Statistics />} />
-        </Routes>
-      </Layout>
-    </Router>
-  )
+    <ThemeProvider>
+      <Router>
+        <Layout>
+          <Routes>
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<SignUp />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/statistics" element={<Statistics />} />
+          </Routes>
+        </Layout>
+      </Router>
+    </ThemeProvider>
+  );
 }
 
 export default App
