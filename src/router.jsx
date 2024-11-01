@@ -3,6 +3,8 @@ import { Routes, Route } from 'react-router-dom';
 import { ProtectedRoute } from './providers/auth-provider';
 import Layout from './components/layout/Layout';
 
+import HabitDebug from '@/components/debug/HabitDebug';
+
 // Pages
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
@@ -49,6 +51,7 @@ export function Router() {
         {/* Public routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
+        <Route path="/debug" element={<HabitDebug />} />
       </Route>
     </Routes>
   );
